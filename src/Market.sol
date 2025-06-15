@@ -3,7 +3,6 @@ pragma solidity ^0.8.26;
 
 contract Market{  
 
-
     struct Item{ //A blueprint for each item listed in the marketplace
         uint256 id;
         string name;
@@ -19,14 +18,12 @@ contract Market{
     error InsufficientFunds();
     error NotSeller();
 
-
     event ItemListed(uint256 indexed itemId, string _name, uint256 _price, address indexed _seller);
     event ItemPurchased(uint indexed _itemId, address indexed buyer, uint256 price);
 
     mapping(uint256 => Item) public items; //maps each item ID to it's Struct Item
     mapping(address => uint256[]) public sellerItems; //maps each seller's address to an array of Item IDs they have listed 
     uint256 private nextItemId = 1;//internal counter, auto incremental for assigning unigue IDs to newly created items
-
 
     function listItem(string calldata _name, uint256 _price) external returns (uint256) { //public function to list an item for sale, uses calldata which is cheaper than memory for string input
         if(bytes(_name).length == 0) {
@@ -35,8 +32,8 @@ contract Market{
         if(_price == 0) {
             revert InvalidPrice();
         }
-
-        //create a new item
+    
+    //create a new item
         uint256 itemId = nextItemId++; //generates a new unique item ID and increments nextItemId
         items[itemId] = Item({ //creates and stores the item in the items mapping
             id: itemId,
@@ -56,7 +53,7 @@ contract Market{
 
     function buyItem(uint256 _itemId) external payable {
         if(items[_itemId].seller == address(0)) {
-        revert ItemNotFound();
+            revert ItemNotFound();
         }
 
         Item storage item = items[_itemId];
@@ -67,6 +64,7 @@ contract Market{
         if(msg.value < item.price) {
             revert InsufficientFunds();
         }
+
         item.isSold = true;
 
         emit ItemPurchased(_itemId, msg.sender, item.price);

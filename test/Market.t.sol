@@ -13,14 +13,11 @@ contract MarketTest is Test {
 
     event ItemListed(uint256 indexed itemId, string _name, uint256 _price, address indexed _seller);
     event ItemPurchased(uint indexed _itemId, address indexed buyer, uint256 price);
-
-
     function setUp() public {
         market = new Market();
         vm.deal(buyer, 100 ether);
         vm.deal(nonSeller, 100 ether);
     }
-
     function testListItem() public {
         vm.prank(seller1);
         vm.expectEmit(true, false, false, true);
