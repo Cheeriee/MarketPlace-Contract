@@ -54,13 +54,12 @@ contract Market{
         return itemId;
     }
 
-
-    function buyItem(uint256 _itemId) external payable { //function to buy a listed item and must be called with ETH which is a payable function
-        if(items[_itemId].seller == address(0)) { //check sellers's record to ensure items exists. validates that the item exists.
-            revert ItemNotFound();
+    function buyItem(uint256 _itemId) external payable {
+        if(items[_itemId].seller == address(0)) {
+        revert ItemNotFound();
         }
 
-        Item storage item = items[_itemId]; //creates a reference to the item in storage(not a copy)
+        Item storage item = items[_itemId];
 
         if(item.isSold){
             revert ItemAlreadySold();
@@ -68,23 +67,28 @@ contract Market{
         if(msg.value < item.price) {
             revert InsufficientFunds();
         }
-        item.isSold = true; // marks the item as sold to prevent re-buying
-        item.seller.transfer(item.price); //sends the item price in ETH to the seller
-        if(msg.value > item.price) {
-            payable(msg.sender).transfer(msg.value - item.price); //refunds any extra ETH to the buyer
-        }
+        item.isSold = true;
 
         emit ItemPurchased(_itemId, msg.sender, item.price);
+
+        (bool sentSeller, ) = item.seller.call{value: item.price}("");
+        require(sentSeller, "Failed to send Ether to seller");
+
+        // Refund overpayment to buyer, if any
+        if(msg.value > item.price) {
+        (bool sentBuyer, ) = payable(msg.sender).call{value: msg.value - item.price}("");
+        require(sentBuyer, "Failed to refund buyer");
+        }
     }
 
     function getItem(uint256 _itemId) external view returns (Item memory) { //returns all data for a specific item and reverts if the item doesn't exist
         if(items[_itemId].seller == address(0)) {
             revert ItemNotFound();
-    }
-        return items[_itemId];
-}
+        }
+            return items[_itemId];
+        }
 
-function getSellerItems(address _seller) external view returns(uint256[] memory) {
-   return sellerItems[_seller]; //returns a list of item IDs listed by a seller
-}
+    function getSellerItems(address _seller) external view returns(uint256[] memory) {
+        return sellerItems[_seller]; //returns a list of item IDs listed by a seller
+    }
 }
